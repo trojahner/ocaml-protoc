@@ -92,7 +92,7 @@
 %start extension_
 %type <Pb_parsing_parse_tree.extension_range list> extension_
 %start reserved_
-%type <Pb_parsing_parse_tree.extension_range list> reserved_
+%type <Pb_parsing_parse_tree.reserved_list> reserved_
 %start extend_
 %type <Pb_parsing_parse_tree.extend> extend_
 
@@ -193,8 +193,8 @@ extension :
   | T_extensions extension_range_list semicolon {$2}
 
 reserved :
-  | T_reserved extension_range_list semicolon {$2}
-/* T_toDO: incomplete, reserved field can also be defined by field names */
+  | T_reserved extension_range_list semicolon { Pb_parsing_util.reserved_numbers $2 }
+  | T_reserved string_list semicolon { Pb_parsing_util.reserved_names $2 }
 
 service :
   | T_service T_ident T_lbrace service_body_content_list rbrace {
@@ -261,6 +261,10 @@ option_content_list :
   | option_value  { [$1] }
   | option_value T_comma  { [$1] }
   | option_value T_comma option_content_list { $1::$3 }
+
+string_list:
+   | T_string  { [$1] }
+   | T_string T_comma string_list { $1 :: $3 }
 
 extension_range_list :
   | extension_range                            {$1 :: []}

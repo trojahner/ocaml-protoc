@@ -68,10 +68,12 @@ val extension_range_single_number : int -> Pt.extension_range
 val extension_range_range :
   int -> [ `Max | `Number of int ] -> Pt.extension_range
 
+val reserved_numbers : Pt.extension_range list -> Pt.reserved_list
+val reserved_names : string list -> Pt.reserved_list
 val message_body_sub : Pt.message -> Pt.message_body_content
 val message_body_enum : Pt.enum -> Pt.message_body_content
 val message_body_extension : Pt.extension_range list -> Pt.message_body_content
-val message_body_reserved : Pt.extension_range list -> Pt.message_body_content
+val message_body_reserved : Pt.reserved_list -> Pt.message_body_content
 val message_body_option : Pb_option.t -> Pt.message_body_content
 val message : content:Pt.message_body_content list -> string -> Pt.message
 

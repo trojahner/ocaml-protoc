@@ -87,6 +87,8 @@ let extension_range_range from to_ =
   in
   Pt.Extension_range (from, to_)
 
+let reserved_numbers ranges = Pt.Reserved_field_numbers ranges
+let reserved_names names = Pt.Reserved_field_names names
 let message_body_field field = Pt.Message_field field
 let message_body_map_field field = Pt.Message_map_field field
 let message_body_oneof_field field = Pt.Message_oneof_field field
@@ -96,9 +98,7 @@ let message_body_enum enum = Pt.Message_enum enum
 let message_body_extension extension_ranges =
   Pt.Message_extension extension_ranges
 
-let message_body_reserved extension_ranges =
-  Pt.Message_extension extension_ranges
-
+let message_body_reserved reserved_list = Pt.Message_reserved reserved_list
 let message_body_option option_ = Pt.Message_option option_
 
 let message ~content message_name =

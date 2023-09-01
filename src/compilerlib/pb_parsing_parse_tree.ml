@@ -101,8 +101,12 @@ type extension_range =
   | Extension_single_number of int
   | Extension_range of extension_range_from * extension_range_to
 
-(** Body content defines all the possible consituant
-    of a message.
+type reserved_list =
+  | Reserved_field_numbers of extension_range list
+  | Reserved_field_names of string list
+
+(** Body content defines all the possible consituant 
+    of a message. 
 *)
 type message_body_content =
   | Message_field of message_field
@@ -111,7 +115,7 @@ type message_body_content =
   | Message_sub of message
   | Message_enum of enum
   | Message_extension of extension_range list
-  | Message_reserved of extension_range list
+  | Message_reserved of reserved_list
   | Message_option of Pb_option.t
 
 and message = {
@@ -271,12 +275,18 @@ let rec pp_message_body_content ppf msg_body_content =
          ~pp_sep:(fun ppf () -> fprintf ppf ";@,")
          pp_extension_range)
       ext_ranges
-  | Message_reserved res_ranges ->
+  | Message_reserved (Reserved_field_numbers res_ranges) ->
     fprintf ppf "Message_reserved [@[<v>%a@]]"
       (pp_print_list
          ~pp_sep:(fun ppf () -> fprintf ppf ";@,")
          pp_extension_range)
       res_ranges
+  | Message_reserved (Reserved_field_names res_names) ->
+    fprintf ppf "Message_reserved [@[<v>%a@]]"
+      (pp_print_list
+         ~pp_sep:(fun ppf () -> fprintf ppf ";@,")
+         (fun ppf s -> fprintf ppf "%S" s))
+      res_names
   | Message_option option -> Pb_option.pp_t ppf option
 
 and pp_message ppf message =

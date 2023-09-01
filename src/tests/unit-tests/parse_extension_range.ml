@@ -62,11 +62,21 @@ let () =
   let s = "reserved 1,2,3 to 10, 11 to max;" in
   let ev = parse_reserved s in
   (match ev with
-  | [ ev1; ev2; ev3; ev4 ] ->
+  | Pt.Reserved_field_numbers [ ev1; ev2; ev3; ev4 ] ->
     assert (Pt.Extension_single_number 1 = ev1);
     assert (Pt.Extension_single_number 2 = ev2);
     assert (Pt.Extension_range (3, Pt.To_number 10) = ev3);
     assert (Pt.Extension_range (11, Pt.To_max) = ev4)
+  | _ -> (assert false : unit));
+  ()
+
+let () =
+  let s = "reserved \"foo\", \"bar\";" in
+  let ev = parse_reserved s in
+  (match ev with
+  | Pt.Reserved_field_names [ ev1; ev2 ] ->
+    assert ("foo" = ev1);
+    assert ("bar" = ev2)
   | _ -> (assert false : unit));
   ()
 
