@@ -94,7 +94,10 @@ let function_name_of_rpc (rpc : Ot.rpc) = String.uncapitalize_ascii rpc.rpc_name
 
 let caml_file_name_of_proto_file_name ~proto_file_name =
   let splitted = Pb_util.rev_split_by_char '.' proto_file_name in
-  if List.length splitted < 2 || List.hd splitted <> "proto" then
+  if
+    List.length splitted < 2
+    || not (List.mem (List.hd splitted) [ "proto"; "proto3" ])
+  then
     failwith "Proto file has no valid extension"
   else
     String.concat "_" @@ List.rev @@ List.tl splitted
