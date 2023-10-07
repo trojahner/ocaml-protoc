@@ -65,9 +65,11 @@ let gen_field_common sc encoding_number payload_kind message_name
     (pbrt_payload_kind payload_kind is_packed);
   F.sub_scope sc f;
   F.line sc "end";
-  F.linep sc "| Some (%i, pk) -> " encoding_number;
-  F.linep sc "  Pbrt.Decoder.unexpected_payload \"%s\" pk"
-    (sp "Message(%s), field(%i)" message_name encoding_number)
+  if not is_packed then (
+    F.linep sc "| Some (%i, pk) -> " encoding_number;
+    F.linep sc "  Pbrt.Decoder.unexpected_payload \"%s\" pk"
+      (sp "Message(%s), field(%i)" message_name encoding_number)
+  )
 
 let gen_rft_nolabel sc r_name rf_label (field_type, encoding_number, pk) =
   gen_field_common sc encoding_number pk r_name (fun sc ->
@@ -91,30 +93,34 @@ let gen_rft_optional sc r_name rf_label optional_field =
 
 let gen_rft_repeated sc r_name rf_label repeated_field =
   let rt, field_type, encoding_number, pk, is_packed = repeated_field in
-  match rt, is_packed with
-  | Ot.Rt_list, false ->
-    gen_field_common sc encoding_number pk r_name ~is_packed (fun sc ->
+  if is_packed then (
+    match rt with
+    | Ot.Rt_list ->
+      gen_field_common sc encoding_number pk r_name ~is_packed:true (fun sc ->
+          F.linep sc
+            "v.%s <- Pbrt.Decoder.packed_fold (fun l d -> (%s)::l) [] d;"
+            rf_label
+            (decode_field_expression field_type pk))
+    | Ot.Rt_repeated_field ->
+      gen_field_common sc encoding_number pk r_name ~is_packed:true (fun sc ->
+          F.line sc "Pbrt.Decoder.packed_fold (fun () d -> ";
+          F.sub_scope sc (fun sc ->
+              F.linep sc "Pbrt.Repeated_field.add (%s) v.%s;"
+                (decode_field_expression field_type pk)
+                rf_label);
+          F.line sc ") () d;")
+  );
+  match rt with
+  | Ot.Rt_list ->
+    gen_field_common sc encoding_number pk r_name ~is_packed:false (fun sc ->
         F.linep sc "v.%s <- (%s) :: v.%s;" rf_label
           (decode_field_expression field_type pk)
           rf_label)
-  | Ot.Rt_repeated_field, false ->
-    gen_field_common sc encoding_number pk r_name ~is_packed (fun sc ->
+  | Ot.Rt_repeated_field ->
+    gen_field_common sc encoding_number pk r_name ~is_packed:false (fun sc ->
         F.linep sc "Pbrt.Repeated_field.add (%s) v.%s; "
           (decode_field_expression field_type pk)
           rf_label)
-  | Ot.Rt_list, true ->
-    gen_field_common sc encoding_number pk r_name ~is_packed (fun sc ->
-        F.linep sc "v.%s <- Pbrt.Decoder.packed_fold (fun l d -> (%s)::l) [] d;"
-          rf_label
-          (decode_field_expression field_type pk))
-  | Ot.Rt_repeated_field, true ->
-    gen_field_common sc encoding_number pk r_name ~is_packed (fun sc ->
-        F.line sc "Pbrt.Decoder.packed_fold (fun () d -> ";
-        F.sub_scope sc (fun sc ->
-            F.linep sc "Pbrt.Repeated_field.add (%s) v.%s;"
-              (decode_field_expression field_type pk)
-              rf_label);
-        F.line sc ") () d;")
 
 let gen_rft_associative sc r_name rf_label associative_field =
   let at, encoding_number, (key_type, key_pk), (value_type, value_pk) =
